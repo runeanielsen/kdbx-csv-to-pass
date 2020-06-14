@@ -18,7 +18,7 @@ type passwordEntry struct {
 }
 
 func main() {
-	filePath := "/home/notation/kdbx/pass"
+	filePath := ""
 
 	if len(os.Args) > 1 {
 		filePath = os.Args[1]
