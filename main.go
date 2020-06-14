@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"sync"
+	"time"
 )
 
 type passwordEntry struct {
@@ -16,17 +18,34 @@ type passwordEntry struct {
 }
 
 func main() {
-	filePath := os.Args[1]
+	filePath := "/home/notation/kdbx/pass"
+
+	if len(os.Args) > 1 {
+		filePath = os.Args[1]
+	}
 
 	csvKdbxFile := readFile(filePath)
 
-	for _, line := range csvKdbxFile {
-		entry := parseLine(line)
+	var wg sync.WaitGroup
 
-		if entry.name != "" {
-			fmt.Printf("Inserting pass %s", entry.name)
-			store(entry)
-		}
+	for _, line := range csvKdbxFile {
+		wg.Add(1)
+		// This is ugly but needed to make sure that the pass command is not locked
+		// Any suggestion please say so
+		time.Sleep(2 * time.Millisecond)
+		go handleKdbxLine(&wg, line)
+	}
+
+	wg.Wait()
+}
+
+func handleKdbxLine(wg *sync.WaitGroup, line string) {
+	defer wg.Done()
+	entry := parseLine(line)
+
+	if entry.name != "" {
+		fmt.Printf("Inserting pass %s\n", entry.name)
+		store(entry)
 	}
 }
 
