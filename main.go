@@ -8,8 +8,6 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
-	"sync"
-	"time"
 )
 
 type passwordEntry struct {
@@ -18,35 +16,28 @@ type passwordEntry struct {
 }
 
 func main() {
-	filePath := ""
+	filePath := "/home/notation/kdbx/pass"
 
 	if len(os.Args) > 1 {
 		filePath = os.Args[1]
 	}
 
 	csvKdbxFile := readFile(filePath)
-
-	var wg sync.WaitGroup
+	cmd := ""
 
 	for _, line := range csvKdbxFile {
-		wg.Add(1)
-		// This is ugly but needed to make sure that the pass command is not locked
-		// Any suggestion please say so
-		time.Sleep(2 * time.Millisecond)
-		go handleKdbxLine(&wg, line)
+		entry := parseLine(line)
+		if entry.name != "" {
+			fmt.Printf("Creating command for %s\n", entry.name)
+			cmd += createPassCommand(entry)
+		}
 	}
 
-	wg.Wait()
-}
+	fmt.Println("All commands created - Inserting passwords.")
 
-func handleKdbxLine(wg *sync.WaitGroup, line string) {
-	defer wg.Done()
-	entry := parseLine(line)
+	store(cmd)
 
-	if entry.name != "" {
-		fmt.Printf("Inserting pass %s\n", entry.name)
-		store(entry)
-	}
+	fmt.Println("Finished inserting passwords.")
 }
 
 func parseLine(line string) passwordEntry {
@@ -90,12 +81,15 @@ func cleanName(name string) string {
 	return name
 }
 
-func store(entry passwordEntry) {
-	cmd := fmt.Sprintf("echo '%s' | pass insert '%s' -e", entry.password, entry.name)
-	_, err := exec.Command("fish", "-c", cmd).Output()
+func createPassCommand(entry passwordEntry) string {
+	return fmt.Sprintf("echo '%s' | pass insert '%s' -e ;", entry.password, entry.name)
+}
+
+func store(cmd string) {
+	err := exec.Command("fish", "-c", cmd).Run()
 
 	if err != nil {
-		fmt.Printf("Failed to execute command: %s\n", cmd)
+		fmt.Printf("Failed to execute command: %s - %s\n", cmd, err)
 	}
 }
 
