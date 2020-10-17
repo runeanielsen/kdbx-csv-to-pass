@@ -23,7 +23,8 @@ func main() {
 	}
 
 	csvKdbxFile := readFile(filePath)
-	cmd := ""
+
+	var cmd string
 
 	for _, line := range csvKdbxFile {
 		entry := parseLine(line)
@@ -101,6 +102,7 @@ func readFile(filepath string) []string {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
