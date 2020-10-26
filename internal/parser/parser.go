@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"bufio"
@@ -15,13 +15,7 @@ type passwordEntry struct {
 	password string
 }
 
-func main() {
-	filePath := "/home/notation/kdbx/pass"
-
-	if len(os.Args) > 1 {
-		filePath = os.Args[1]
-	}
-
+func Parse(filePath string) {
 	csvKdbxFile := readFile(filePath)
 
 	var cmd string
@@ -29,16 +23,11 @@ func main() {
 	for _, line := range csvKdbxFile {
 		entry := parseLine(line)
 		if entry.name != "" {
-			fmt.Printf("Creating command for %s\n", entry.name)
 			cmd += createPassCommand(entry)
 		}
 	}
 
-	fmt.Println("All commands created - Inserting passwords.")
-
 	store(cmd)
-
-	fmt.Println("Finished inserting passwords.")
 }
 
 func parseLine(line string) passwordEntry {
@@ -90,7 +79,7 @@ func store(cmd string) {
 	err := exec.Command("fish", "-c", cmd).Run()
 
 	if err != nil {
-		fmt.Printf("Failed to execute command: %s - %s\n", cmd, err)
+		log.Fatalf("Failed to execute command: %s - %s\n", cmd, err)
 	}
 }
 
