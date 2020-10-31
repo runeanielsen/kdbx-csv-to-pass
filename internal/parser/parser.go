@@ -58,7 +58,7 @@ func parseLine(line string) passwordEntry {
 }
 
 func escapeSingleQuotes(text string) string {
-	return strings.ReplaceAll(text, "'", "\\'")
+	return strings.ReplaceAll(text, "'", "''")
 }
 
 func removeQuotes(text string) string {
@@ -72,11 +72,11 @@ func cleanName(name string) string {
 }
 
 func createPassCommand(entry passwordEntry) string {
-	return fmt.Sprintf("echo '%s' | pass insert '%s' -e ;", entry.password, entry.name)
+	return fmt.Sprintf("echo '%s' | pass insert '%s' -e;", entry.password, entry.name)
 }
 
 func store(cmd string) {
-	err := exec.Command("fish", "-c", cmd).Run()
+	err := exec.Command("bash", "-c", cmd).Run()
 
 	if err != nil {
 		log.Fatalf("Failed to execute command: %s - %s\n", cmd, err)
