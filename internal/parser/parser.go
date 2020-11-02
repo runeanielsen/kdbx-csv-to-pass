@@ -27,29 +27,33 @@ func Parse(filePath string) {
 		}
 	}
 
-	store(cmd)
+	err := exec.Command("bash", "-c", cmd).Run()
+
+	if err != nil {
+		log.Fatalf("Failed to execute command: %s - %s\n", cmd, err)
+	}
 }
 
 func parseLine(line string) passwordEntry {
 	splitted := strings.Split(line, ",")
 
 	if len(splitted) > 4 {
-		name, username, password := splitted[1], splitted[2], splitted[3]
+		entryName, username, password := splitted[1], splitted[2], splitted[3]
 
-		name = removeQuotes(name)
+		entryName = removeQuotes(entryName)
 		username = removeQuotes(username)
 		password = removeQuotes(password)
 		password = escapeSingleQuotes(password)
 
-		newName := name
+		newEntryName := entryName
 		if username != "" {
-			newName += "-" + username
+			newEntryName += "-" + username
 		}
 
-		newName = cleanName(newName)
+		newEntryName = standardize(newEntryName)
 
 		return passwordEntry{
-			name:     newName,
+			name:     newEntryName,
 			password: password,
 		}
 	}
@@ -65,34 +69,25 @@ func removeQuotes(text string) string {
 	return strings.ReplaceAll(text, "\"", "")
 }
 
-func cleanName(name string) string {
-	name = strings.ToLower(name)
-	name = strings.ReplaceAll(name, " ", "_")
-	return name
+func standardize(text string) string {
+	text = strings.ToLower(text)
+	text = strings.ReplaceAll(text, " ", "_")
+	return text
 }
 
 func createPassCommand(entry passwordEntry) string {
 	return fmt.Sprintf("echo '%s' | pass insert '%s' -e;", entry.password, entry.name)
 }
 
-func store(cmd string) {
-	err := exec.Command("bash", "-c", cmd).Run()
-
-	if err != nil {
-		log.Fatalf("Failed to execute command: %s - %s\n", cmd, err)
-	}
-}
-
 func readFile(filepath string) []string {
 	lines := make([]string, 0)
 
 	file, err := os.Open(filepath)
+	defer file.Close()
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 

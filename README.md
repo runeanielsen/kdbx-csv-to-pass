@@ -5,7 +5,7 @@ Takes your KDBX exported CSV file and calls the pass insert command - inserting 
 The app takes one argument that is the path to the kdbx csv file.
 
 ```sh
-go run ./main.go %kdbx-csv-path%
+go run ./cmd/kdbx-csv-to-pass/main.go %kdbx-csv-path%
 
 ```
 
