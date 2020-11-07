@@ -1,12 +1,7 @@
 package parser
 
 import (
-	"bufio"
 	"fmt"
-	"log"
-	"os"
-	"os/exec"
-	"regexp"
 	"strings"
 )
 
@@ -15,11 +10,10 @@ type passwordEntry struct {
 	password string
 }
 
-func Parse(filePath string) {
-	csvKdbxFile := readFile(filePath)
+func Parse(filePath string, cmdExec CmdExec, fileReader FileReader) {
+	csvKdbxFile := fileReader.ReadLines(filePath)
 
 	var cmd string
-
 	for _, line := range csvKdbxFile {
 		entry := parseLine(line)
 		if entry.name != "" {
@@ -27,11 +21,7 @@ func Parse(filePath string) {
 		}
 	}
 
-	err := exec.Command("bash", "-c", cmd).Run()
-
-	if err != nil {
-		log.Fatalf("Failed to execute command: %s - %s\n", cmd, err)
-	}
+	cmdExec.ExecuteCmd(cmd)
 }
 
 func parseLine(line string) passwordEntry {
@@ -77,33 +67,4 @@ func standardize(text string) string {
 
 func createPassCommand(entry passwordEntry) string {
 	return fmt.Sprintf("echo '%s' | pass insert '%s' -e;", entry.password, entry.name)
-}
-
-func readFile(filepath string) []string {
-	lines := make([]string, 0)
-
-	file, err := os.Open(filepath)
-	defer file.Close()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		matched, err := regexp.MatchString(`(?:Recycle)|(?:Backup).*`, line)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		if !matched {
-			lines = append(lines, line)
-		}
-	}
-
-	return lines
 }
