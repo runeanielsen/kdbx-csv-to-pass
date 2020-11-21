@@ -14,7 +14,7 @@ func main() {
 
 	if *file == "" {
 		flag.Usage()
-		os.Exit(0)
+		os.Exit(1)
 	}
 
 	fmt.Printf("Starting import of passwords from file %s\n", *file)
