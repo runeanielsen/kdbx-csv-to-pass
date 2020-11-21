@@ -1,21 +1,23 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/runeanielsen/kdbx-csv-to-pass/internal/parser"
 )
 
 func main() {
-	if len(os.Args) > 1 {
-		var filePath string = os.Args[1]
-		fmt.Printf("Starting import of passwords from file %s\n", filePath)
-		parser.Parse(filePath, parser.CmdExecBash{}, parser.KdbxCsvReader{})
-	} else {
-		log.Fatal("Parameter for filepath is missing")
+	file := flag.String("flag", "", "Path to exported kdbx.csv")
+	flag.Parse()
+
+	if *file == "" {
+		flag.Usage()
+		os.Exit(0)
 	}
 
+	fmt.Printf("Starting import of passwords from file %s\n", *file)
+	parser.Parse(*file, parser.CmdExecBash{}, parser.KdbxCsvReader{})
 	fmt.Println("Finished import passwords")
 }
